@@ -1,2 +1,2 @@
-include ':app'
+include ':app', ':spyn-sdk'
 rootProject.name='Spyn Example'

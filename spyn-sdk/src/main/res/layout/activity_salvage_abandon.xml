@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".SalvageAbandon">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/interstitialbackground"
+            android:text=""
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="1.0" />
+
+        <ImageButton
+            android:id="@+id/closeScreen"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="16dp"
+            android:src="@drawable/deleteicon"
+            android:background="@null"
+            android:onClick="closeOfferOverlay"
+            android:layout_alignParentEnd="true" />
+
+        <android.support.constraint.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:background="#00FFFFFF">
+
+            <ImageView
+                android:id="@+id/whoopsGraphic"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:background="#00FFFFFF"
+                android:src="@drawable/whoopsgraphic"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:layout_conversion_absoluteHeight="164dp"
+                tools:layout_conversion_absoluteWidth="276dp" />
+
+            <ImageView
+                android:id="@+id/partnerLogo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingEnd="70dp"
+                android:paddingBottom="22dp"
+                app:layout_constraintBottom_toBottomOf="@id/whoopsGraphic"
+                app:layout_constraintEnd_toStartOf="@id/guideline"/>
+
+            <android.support.constraint.Guideline
+                android:id="@+id/guideline"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                app:layout_constraintGuide_percent="0.5" />
+
+            <TextView
+                android:id="@+id/whoopsTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingTop="25dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/whoopsGraphic"
+                android:fontFamily="@font/avenirnextbold"
+                android:text="@string/whoopsTitle"
+                android:textColor="#FFFFFF"
+                android:textSize="32sp" />
+
+
+        </android.support.constraint.ConstraintLayout>
+
+        <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="420dp"
+            android:layout_height="731dp"
+            android:gravity="center_horizontal"
+            tools:layout_editor_absoluteX="-9dp"
+            tools:layout_editor_absoluteY="0dp"
+            android:layout_centerHorizontal="true">
+
+            <TextView
+                android:id="@+id/whoopsText"
+                android:layout_width="300dp"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_centerInParent="true"
+                android:layout_marginTop="317dp"
+                android:fontFamily="@font/avenirnextbold"
+                android:lineSpacingExtra="8dp"
+                android:text=""
+                android:textColor="#CCFFFFFF"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/upgradeButton"
+                android:layout_width="320dp"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_centerInParent="true"
+                android:onClick="acceptOffer"
+                android:layout_marginBottom="20dp"
+                android:paddingBottom="6dp"
+                android:textStyle="bold"
+                android:text="@string/whoopsButtonText"
+                android:background="@drawable/acceptbutton"
+                android:textColor="#000000"
+                android:textSize="16sp"
+                android:fontFamily="@font/avenirnextltprobold" />
+
+        </RelativeLayout>
+
+    </RelativeLayout>
+
+</android.support.constraint.ConstraintLayout>
