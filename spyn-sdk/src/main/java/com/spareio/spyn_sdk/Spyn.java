@@ -5,6 +5,7 @@ import android.graphics.drawable.Drawable;
 
 public class Spyn {
     private static spynSDK spyn;
+
     public static spynSDK initSpyn(Drawable icon, String dealId, String lang, Context mContext) {
         spyn = new spynSDK.Builder()
                 .setIcon(mContext.getApplicationInfo().loadIcon(mContext.getPackageManager()))
@@ -12,6 +13,10 @@ public class Spyn {
                 .setLang("en")
                 .setContext(mContext)
                 .create();
+        return spyn;
+    }
+
+    public static spynSDK getInstance() {
         return spyn;
     }
 }
