@@ -29,10 +29,12 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:layout_marginEnd="16dp"
+            android:layout_marginRight="16dp"
             android:src="@drawable/deleteicon"
             android:background="@null"
             android:onClick="closeOfferOverlay"
-            android:layout_alignParentEnd="true" />
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"/>
 
         <android.support.constraint.ConstraintLayout
             android:layout_width="match_parent"
@@ -57,6 +59,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingEnd="70dp"
+                android:paddingRight="70dp"
                 android:paddingBottom="22dp"
                 app:layout_constraintBottom_toBottomOf="@id/whoopsGraphic"
                 app:layout_constraintEnd_toStartOf="@id/guideline"/>

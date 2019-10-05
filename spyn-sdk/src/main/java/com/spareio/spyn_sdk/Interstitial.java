@@ -45,6 +45,7 @@ public class Interstitial extends AppCompatActivity {
                 .setLang("en")
                 .setContext(this)
                 .create();
+
         if (spynSDK.isAppInstalled()) {
             Intent intent2 = new Intent(getApplicationContext(), Success.class);
             getApplication().startActivity(intent2);

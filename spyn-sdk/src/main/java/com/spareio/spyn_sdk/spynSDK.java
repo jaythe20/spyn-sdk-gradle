@@ -41,7 +41,8 @@ import java.util.UUID;
 public class spynSDK {
 
     private Context mContext;
-
+    static final String POST = "POST";
+    static final String GET = "GET";
     private Drawable icon;
 
     private JSONObject worker = null;
@@ -105,8 +106,7 @@ public class spynSDK {
         try {
             mContext.getPackageManager().getApplicationInfo(packageName, 0);
             return true;
-        }
-        catch (PackageManager.NameNotFoundException e) {
+        } catch (PackageManager.NameNotFoundException e) {
             return false;
         }
     }
@@ -152,7 +152,7 @@ public class spynSDK {
         worker = getWorker();
         String app_url;
         try {
-             app_url = worker.get("app_url").toString();
+            app_url = worker.get("app_url").toString();
         } catch (JSONException e) {
             Log.d("Exception", e.toString());
             app_url = "";
@@ -183,282 +183,443 @@ public class spynSDK {
 
     // Perform device registration
     public void register() {
-        RequestQueue queue = Volley.newRequestQueue(mContext);
-
         JSONObject json = getRegisterVars(this.dealId);
-        JsonObjectRequest jsonobj = new JsonObjectRequest(Request.Method.POST, baseUrl, json,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        try {
-                            response.put("worker_id", getMachineId());
-                            editor.putString("worker", response.toString());
-                            editor.commit();
-                            worker = response;
-                            insertPartnerRecord();
-                            showStatusMessage("Registered \nworker: " + getMachineId());
-                        } catch (Exception e) {
-                            Log.d("Exception", "Failed to register");
-                            Log.d("Exception", e.toString());
-                            showStatusMessage("Registration succeeded but an error has occurred");
-                        }
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        String json;
+//        String method1, String uCall, String json, TaskCompletionListener tListener
+        new ApiTask(POST, baseUrl, json.toString(), new TaskCompletionListener() {
+            @Override
+            public void OnTaskComlpeted(java.lang.String resp) {
 
-                        NetworkResponse response = error.networkResponse;
-                        if(response != null && response.data != null){
-                            switch(response.statusCode){
-                                case 400: case 412: case 404:
-                                    json = new String(response.data);
-                                    Log.w("Volley Error", json);
-                                    getWorkerFromAPI(false);
-                                    showStatusMessage("Device already registered\nworker: " + getMachineId());
-                                    break;
-                            }
-                        }
+                if (resp.equalsIgnoreCase("400") || resp.equalsIgnoreCase("412") || resp.equalsIgnoreCase("404")) {
+                    Log.w("API Error", resp);
+                    getWorkerFromAPI(false);
+                    showStatusMessage("Device already registered\nworker: " + getMachineId());
+                } else {
+                    try {
+                        JSONObject jsonObject = new JSONObject(resp);
+                        jsonObject.put("worker_id", getMachineId());
+                        editor.putString("worker", jsonObject.toString());
+                        editor.commit();
+                        worker = jsonObject;
+                        insertPartnerRecord();
+                        showStatusMessage("Registered \nworker: " + getMachineId());
+                    } catch (Exception e) {
+                        Log.d("Exception", "Failed to register");
+                        Log.d("Exception", e.toString());
+                        showStatusMessage("Registration succeeded but an error has occurred");
                     }
                 }
-        ){};
-        queue.add(jsonobj);
+            }
+        });
+
+//        RequestQueue queue = Volley.newRequestQueue(mContext);
+//        JsonObjectRequest jsonobj = new JsonObjectRequest(Request.Method.POST, baseUrl, json,
+//                new Response.Listener<JSONObject>() {
+//                    @Override
+//                    public void onResponse(JSONObject response) {
+//                        try {
+//                            response.put("worker_id", getMachineId());
+//                            editor.putString("worker", response.toString());
+//                            editor.commit();
+//                            worker = response;
+//                            insertPartnerRecord();
+//                            showStatusMessage("Registered \nworker: " + getMachineId());
+//                        } catch (Exception e) {
+//                            Log.d("Exception", "Failed to register");
+//                            Log.d("Exception", e.toString());
+//                            showStatusMessage("Registration succeeded but an error has occurred");
+//                        }
+//                    }
+//                },
+//                new Response.ErrorListener() {
+//                    @Override
+//                    public void onErrorResponse(VolleyError error) {
+//                        String json;
+//
+//                        NetworkResponse response = error.networkResponse;
+//                        if (response != null && response.data != null) {
+//                            switch (response.statusCode) {
+//                                case 400:
+//                                case 412:
+//                                case 404:
+//                                    json = new String(response.data);
+//                                    Log.w("Volley Error", json);
+//                                    getWorkerFromAPI(false);
+//                                    showStatusMessage("Device already registered\nworker: " + getMachineId());
+//                                    break;
+//                            }
+//                        }
+//                    }
+//                }
+//        ) {
+//        };
+//        queue.add(jsonobj);
     }
 
     // Fetch the worker object from the API
     public void getWorkerFromAPI(final Boolean doOffer) {
         String url = baseUrl + getMachineId() + "?secret=" + getSecret();
-        RequestQueue queue = Volley.newRequestQueue(mContext);
 
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        // Display the first 500 characters of the response string.
-                        try {
-                            JSONObject temp = new JSONObject(response);
-                            temp.put("worker_id", getMachineId());
-                            response = temp.toString();
-                        } catch (Exception e) {
-                            // Do nothing
-                        }
-                        editor.putString("worker", response);
-                        editor.commit();
-                        if (doOffer) {
-                            String[] eventsArray = getEvents();
-                            if (Arrays.asList(eventsArray).contains("activated")) {
-                                if (!isAppInstalled()) {
-                                    Intent intent = new Intent(mContext, Interstitial.class);
-                                    intent.putExtra(EXTRA_DEALID, dealId);
-                                    mContext.startActivity(intent);
-                                } else {
-                                    Log.d("Status", "It's activated");
-                                    Intent intent = new Intent(mContext, Success.class);
-                                    mContext.startActivity(intent);
-                                }
+        new ApiTask(GET, url, "", new TaskCompletionListener() {
+            @Override
+            public void OnTaskComlpeted(java.lang.String response) {
 
-                            } else if (Arrays.asList(eventsArray).contains("accepted")) {
-                                if (!isAppInstalled()) {
-                                    // Show interstitial
-                                    Intent intent = new Intent(mContext, Interstitial.class);
-                                    intent.putExtra(EXTRA_DEALID, dealId);
-                                    mContext.startActivity(intent);
-                                } else {
-                                    Intent intent = mContext.getPackageManager().getLaunchIntentForPackage("com.spare.spyn");
-                                    mContext.startActivity(intent);
-                                }
-                            } else {
+                if (response.equalsIgnoreCase("400") || response.equalsIgnoreCase("412") || response.equalsIgnoreCase("404")) {
+                    Log.w("API Error", response);
+                    Log.d("getWorkerFromApi", "got an error, doing register");
+                    register();
+                } else {
+                    // Display the first 500 characters of the response string.
+                    try {
+                        JSONObject temp = new JSONObject(response);
+                        temp.put("worker_id", getMachineId());
+                        response = temp.toString();
+                    } catch (Exception e) {
+                        // Do nothing
+                    }
+                    editor.putString("worker", response);
+                    editor.commit();
+                    if (doOffer) {
+                        String[] eventsArray = getEvents();
+                        if (Arrays.asList(eventsArray).contains("activated")) {
+                            if (!isAppInstalled()) {
                                 Intent intent = new Intent(mContext, Interstitial.class);
                                 intent.putExtra(EXTRA_DEALID, dealId);
                                 mContext.startActivity(intent);
+                            } else {
+                                Log.d("Status", "It's activated");
+                                Intent intent = new Intent(mContext, Success.class);
+                                mContext.startActivity(intent);
                             }
-                        }
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        String json;
 
-                        NetworkResponse response = error.networkResponse;
-                        if(response != null && response.data != null){
-                            switch(response.statusCode){
-                                case 400: case 412: case 404:
-                                    json = new String(response.data);
-                                    Log.w("Volley Error", json);
-                                    Log.d("getWorkerFromApi", "got an error, doing register");
-                                    register();
-                                    break;
+                        } else if (Arrays.asList(eventsArray).contains("accepted")) {
+                            if (!isAppInstalled()) {
+                                // Show interstitial
+                                Intent intent = new Intent(mContext, Interstitial.class);
+                                intent.putExtra(EXTRA_DEALID, dealId);
+                                mContext.startActivity(intent);
+                            } else {
+                                Intent intent = mContext.getPackageManager().getLaunchIntentForPackage("com.spare.spyn");
+                                mContext.startActivity(intent);
                             }
+                        } else {
+                            Intent intent = new Intent(mContext, Interstitial.class);
+                            intent.putExtra(EXTRA_DEALID, dealId);
+                            mContext.startActivity(intent);
                         }
                     }
                 }
-        );
-        queue.add(stringRequest);
+            }
+        });
+
+
+//        RequestQueue queue = Volley.newRequestQueue(mContext);
+//
+//        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+//                new Response.Listener<String>() {
+//                    @Override
+//                    public void onResponse(String response) {
+//                        // Display the first 500 characters of the response string.
+//                        try {
+//                            JSONObject temp = new JSONObject(response);
+//                            temp.put("worker_id", getMachineId());
+//                            response = temp.toString();
+//                        } catch (Exception e) {
+//                            // Do nothing
+//                        }
+//                        editor.putString("worker", response);
+//                        editor.commit();
+//                        if (doOffer) {
+//                            String[] eventsArray = getEvents();
+//                            if (Arrays.asList(eventsArray).contains("activated")) {
+//                                if (!isAppInstalled()) {
+//                                    Intent intent = new Intent(mContext, Interstitial.class);
+//                                    intent.putExtra(EXTRA_DEALID, dealId);
+//                                    mContext.startActivity(intent);
+//                                } else {
+//                                    Log.d("Status", "It's activated");
+//                                    Intent intent = new Intent(mContext, Success.class);
+//                                    mContext.startActivity(intent);
+//                                }
+//
+//                            } else if (Arrays.asList(eventsArray).contains("accepted")) {
+//                                if (!isAppInstalled()) {
+//                                    // Show interstitial
+//                                    Intent intent = new Intent(mContext, Interstitial.class);
+//                                    intent.putExtra(EXTRA_DEALID, dealId);
+//                                    mContext.startActivity(intent);
+//                                } else {
+//                                    Intent intent = mContext.getPackageManager().getLaunchIntentForPackage("com.spare.spyn");
+//                                    mContext.startActivity(intent);
+//                                }
+//                            } else {
+//                                Intent intent = new Intent(mContext, Interstitial.class);
+//                                intent.putExtra(EXTRA_DEALID, dealId);
+//                                mContext.startActivity(intent);
+//                            }
+//                        }
+//                    }
+//                },
+//                new Response.ErrorListener() {
+//                    @Override
+//                    public void onErrorResponse(VolleyError error) {
+//                        String json;
+//
+//                        NetworkResponse response = error.networkResponse;
+//                        if (response != null && response.data != null) {
+//                            switch (response.statusCode) {
+//                                case 400:
+//                                case 412:
+//                                case 404:
+//                                    json = new String(response.data);
+//                                    Log.w("Volley Error", json);
+//                                    Log.d("getWorkerFromApi", "got an error, doing register");
+//                                    register();
+//                                    break;
+//                            }
+//                        }
+//                    }
+//                }
+//        );
+//        queue.add(stringRequest);
     }
 
     // Make Offered call
     public void offer() {
         String url = baseUrl + getMachineId() + "/offered/?secret=" + getSecret();
-        RequestQueue queue = Volley.newRequestQueue(mContext);
+        new ApiTask(POST, url, "", new TaskCompletionListener() {
+            @Override
+            public void OnTaskComlpeted(java.lang.String response) {
+                if (response.equalsIgnoreCase("400") || response.equalsIgnoreCase("412") || response.equalsIgnoreCase("404")) {
+                    Log.w("API Error", response);
 
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        // Display the first 500 characters of the response string.
-                        Log.d("Offered", "Spare has been offered");
-                        showStatusMessage("Offer has been shown to the user");
-                        getWorkerFromAPI(false);
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        String json;
-
-                        NetworkResponse response = error.networkResponse;
-                        if(response != null && response.data != null){
-                            switch(response.statusCode){
-                                case 400: case 412: case 404:
-                                    json = new String(response.data);
-                                    Log.w("Volley Error", json);
-                                    break;
-                            }
-                        }
-                    }
+                } else {
+                    // Display the first 500 characters of the response string.
+                    Log.d("Offered", "Spare has been offered");
+                    showStatusMessage("Offer has been shown to the user");
+                    getWorkerFromAPI(false);
                 }
-        );
-        queue.add(stringRequest);
+            }
+        });
+
+
+//        RequestQueue queue = Volley.newRequestQueue(mContext);
+//
+//        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+//                new Response.Listener<String>() {
+//                    @Override
+//                    public void onResponse(String response) {
+//                        // Display the first 500 characters of the response string.
+//                        Log.d("Offered", "Spare has been offered");
+//                        showStatusMessage("Offer has been shown to the user");
+//                        getWorkerFromAPI(false);
+//                    }
+//                },
+//                new Response.ErrorListener() {
+//                    @Override
+//                    public void onErrorResponse(VolleyError error) {
+//                        String json;
+//
+//                        NetworkResponse response = error.networkResponse;
+//                        if (response != null && response.data != null) {
+//                            switch (response.statusCode) {
+//                                case 400:
+//                                case 412:
+//                                case 404:
+//                                    json = new String(response.data);
+//                                    Log.w("Volley Error", json);
+//                                    break;
+//                            }
+//                        }
+//                    }
+//                }
+//        );
+//        queue.add(stringRequest);
     }
 
     // Make Accepted call
     public void accept() {
         String url = baseUrl + getMachineId() + "/accepted/?secret=" + getSecret();
-        RequestQueue queue = Volley.newRequestQueue(mContext);
+        new ApiTask(POST, url, "", new TaskCompletionListener() {
+            @Override
+            public void OnTaskComlpeted(java.lang.String response) {
+                if (response.equalsIgnoreCase("400") || response.equalsIgnoreCase("412") || response.equalsIgnoreCase("404")) {
+                    Log.w("API Error", response);
 
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        // Display the first 500 characters of the response string.
-                        Log.d("Accepted", "Spare has been accepted");
-                        showStatusMessage("Offer has been accepted the user");
-                        getWorkerFromAPI(false);
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        String json;
-
-                        NetworkResponse response = error.networkResponse;
-                        if(response != null && response.data != null){
-                            switch(response.statusCode){
-                                case 400: case 412: case 404:
-                                    json = new String(response.data);
-                                    Log.w("Volley Error", json);
-                                    break;
-                            }
-                        }
-                    }
+                } else {
+                    // Display the first 500 characters of the response string.
+                    Log.d("Accepted", "Spare has been accepted");
+                    showStatusMessage("Offer has been accepted the user");
+                    getWorkerFromAPI(false);
                 }
-        );
-        queue.add(stringRequest);
+            }
+        });
+
+//        RequestQueue queue = Volley.newRequestQueue(mContext);
+//
+//        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+//                new Response.Listener<String>() {
+//                    @Override
+//                    public void onResponse(String response) {
+//                        // Display the first 500 characters of the response string.
+//                        Log.d("Accepted", "Spare has been accepted");
+//                        showStatusMessage("Offer has been accepted the user");
+//                        getWorkerFromAPI(false);
+//                    }
+//                },
+//                new Response.ErrorListener() {
+//                    @Override
+//                    public void onErrorResponse(VolleyError error) {
+//                        String json;
+//
+//                        NetworkResponse response = error.networkResponse;
+//                        if (response != null && response.data != null) {
+//                            switch (response.statusCode) {
+//                                case 400:
+//                                case 412:
+//                                case 404:
+//                                    json = new String(response.data);
+//                                    Log.w("Volley Error", json);
+//                                    break;
+//                            }
+//                        }
+//                    }
+//                }
+//        );
+//        queue.add(stringRequest);
     }
 
     // Make Rejected call
     public void reject() {
         String url = baseUrl + getMachineId() + "/rejected/?secret=" + getSecret();
-        RequestQueue queue = Volley.newRequestQueue(mContext);
 
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        // Display the first 500 characters of the response string.
-                        Log.d("Rejected", "Spare has been rejected");
-                        showStatusMessage("Offer has been rejected by the user");
-                        getWorkerFromAPI(false);
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        String json;
+        new ApiTask(POST, url, "", new TaskCompletionListener() {
+            @Override
+            public void OnTaskComlpeted(java.lang.String response) {
+                if (response.equalsIgnoreCase("400") || response.equalsIgnoreCase("412") || response.equalsIgnoreCase("404")) {
+                    Log.w("API Error", response);
 
-                        NetworkResponse response = error.networkResponse;
-                        if(response != null && response.data != null){
-                            switch(response.statusCode){
-                                case 400: case 412: case 404:
-                                    json = new String(response.data);
-                                    Log.w("Volley Error", json);
-                                    break;
-                            }
-                        }
-                    }
+                } else {
+                    // Display the first 500 characters of the response string.
+                    Log.d("Rejected", "Spare has been rejected");
+                    showStatusMessage("Offer has been rejected by the user");
+                    getWorkerFromAPI(false);
                 }
-        );
-        queue.add(stringRequest);
+            }
+        });
+
+
+//        RequestQueue queue = Volley.newRequestQueue(mContext);
+//
+//        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+//                new Response.Listener<String>() {
+//                    @Override
+//                    public void onResponse(String response) {
+//                        // Display the first 500 characters of the response string.
+//                        Log.d("Rejected", "Spare has been rejected");
+//                        showStatusMessage("Offer has been rejected by the user");
+//                        getWorkerFromAPI(false);
+//                    }
+//                },
+//                new Response.ErrorListener() {
+//                    @Override
+//                    public void onErrorResponse(VolleyError error) {
+//                        String json;
+//
+//                        NetworkResponse response = error.networkResponse;
+//                        if (response != null && response.data != null) {
+//                            switch (response.statusCode) {
+//                                case 400:
+//                                case 412:
+//                                case 404:
+//                                    json = new String(response.data);
+//                                    Log.w("Volley Error", json);
+//                                    break;
+//                            }
+//                        }
+//                    }
+//                }
+//        );
+//        queue.add(stringRequest);
     }
 
     // Call the deal endpoint
     public void getDeal() {
         String url = dealUrl + dealId;
-        RequestQueue queue = Volley.newRequestQueue(mContext);
-
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                new Response.Listener<String>()
-                {
-                    @Override
-                    public void onResponse(String response) {
-                        // response
-                        Log.d("DealInfo", response);
-                        try {
-                            final JSONObject json = new JSONObject(response);
-                            for(int i=0;i<json.getJSONArray("details").length();i++)
-                            {
-                                JSONObject jsonObject = json.getJSONArray("details").getJSONObject(i);
-                                Log.d("Deal Info", jsonObject.toString());
-                                editor.putString(jsonObject.getString("key"), jsonObject.getString("value"));
-                            }
-                            editor.commit();
-                        } catch (Exception e) {
-                            Log.d("Exception", e.toString());
+//        RequestQueue queue = Volley.newRequestQueue(mContext);
+        new ApiTask(GET, url, "", new TaskCompletionListener() {
+            @Override
+            public void OnTaskComlpeted(java.lang.String response) {
+                if (response.equalsIgnoreCase("400") || response.equalsIgnoreCase("412") || response.equalsIgnoreCase("404")) {
+                    Log.w("API Error", response);
+                } else {
+                    // response
+                    Log.d("DealInfo", response);
+                    try {
+                        final JSONObject json = new JSONObject(response);
+                        for (int i = 0; i < json.getJSONArray("details").length(); i++) {
+                            JSONObject jsonObject = json.getJSONArray("details").getJSONObject(i);
+                            Log.d("Deal Info", jsonObject.toString());
+                            editor.putString(jsonObject.getString("key"), jsonObject.getString("value"));
                         }
-
-                    }
-                },
-                new Response.ErrorListener()
-                {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        // TODO Auto-generated method stub
-                        String json;
-
-                        NetworkResponse response = error.networkResponse;
-                        if(response != null && response.data != null){
-                            switch(response.statusCode){
-                                case 400: case 412: case 404:
-                                    json = new String(response.data);
-                                    Log.w("Volley Error", json);
-                                    break;
-                            }
-                        }
+                        editor.commit();
+                    } catch (Exception e) {
+                        Log.d("Exception", e.toString());
                     }
                 }
-        ) {
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String>  params = new HashMap<String, String>();
-                params.put("Accept-Language", lang);
-
-                return params;
             }
-        };
+        });
 
-        queue.add(stringRequest);
+
+//        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+//                new Response.Listener<String>() {
+//                    @Override
+//                    public void onResponse(String response) {
+//                        // response
+//                        Log.d("DealInfo", response);
+//                        try {
+//                            final JSONObject json = new JSONObject(response);
+//                            for (int i = 0; i < json.getJSONArray("details").length(); i++) {
+//                                JSONObject jsonObject = json.getJSONArray("details").getJSONObject(i);
+//                                Log.d("Deal Info", jsonObject.toString());
+//                                editor.putString(jsonObject.getString("key"), jsonObject.getString("value"));
+//                            }
+//                            editor.commit();
+//                        } catch (Exception e) {
+//                            Log.d("Exception", e.toString());
+//                        }
+//
+//                    }
+//                },
+//                new Response.ErrorListener() {
+//                    @Override
+//                    public void onErrorResponse(VolleyError error) {
+//                        // TODO Auto-generated method stub
+//                        String json;
+//
+//                        NetworkResponse response = error.networkResponse;
+//                        if (response != null && response.data != null) {
+//                            switch (response.statusCode) {
+//                                case 400:
+//                                case 412:
+//                                case 404:
+//                                    json = new String(response.data);
+//                                    Log.w("Volley Error", json);
+//                                    break;
+//                            }
+//                        }
+//                    }
+//                }
+//        ) {
+//            @Override
+//            public Map<String, String> getHeaders() throws AuthFailureError {
+//                Map<String, String> params = new HashMap<String, String>();
+//                params.put("Accept-Language", lang);
+//
+//                return params;
+//            }
+//        };
+//
+//        queue.add(stringRequest);
     }
 
     public JSONObject getRegisterVars(String dealId) {
@@ -495,22 +656,28 @@ public class spynSDK {
                 if (vals.length > 1) map.put(vals[0].trim(), vals[1].trim());
             }
             cpuName = map.get("vendor_id") + " " + map.get("model name");
-        } catch (Exception e) {Log.e("getCpuInfoMap",Log.getStackTraceString(e));}
+        } catch (Exception e) {
+            Log.e("getCpuInfoMap", Log.getStackTraceString(e));
+        }
 
         return cpuName;
     }
 
     private String getRam() {
         Runtime runtime = Runtime.getRuntime();
-        final long memory=runtime.totalMemory();
+        final long memory = runtime.totalMemory();
         return Long.toString(memory);
     }
 
     private String getRom() {
         File path = Environment.getDataDirectory();
         StatFs stat = new StatFs(path.getPath());
-        long blockSize = stat.getBlockSizeLong();
-        long totalBlocks = stat.getBlockCountLong();
+        long blockSize = 0;
+        long totalBlocks = 0;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            blockSize = stat.getBlockSizeLong();
+            totalBlocks = stat.getBlockCountLong();
+        }
         return Long.toString(totalBlocks * blockSize);
     }
 
@@ -525,29 +692,29 @@ public class spynSDK {
         try {
             JSONArray eventsJson = getWorker().getJSONArray("events");
             events = new String[eventsJson.length()];
-            for (int i = 0 ; i < eventsJson.length(); i++) {
+            for (int i = 0; i < eventsJson.length(); i++) {
                 events[i] = eventsJson.getJSONObject(i).getString("event");
             }
 
             return events;
-        } catch(Exception e) {
+        } catch (Exception e) {
             Log.d("Exception", e.toString());
         }
 
         return new String[0];
     }
 
-    private void insertPartnerRecord(){
+    private void insertPartnerRecord() {
         ContentValues values = new ContentValues();
-        values.put(SpynPartnerEntry.COLUMN_WORKER,getWorker().toString());
+        values.put(SpynPartnerEntry.COLUMN_WORKER, getWorker().toString());
 
-        Uri uri = mContext.getContentResolver().insert(SpynPartnerEntry.CONTENT_URI,values);
+        Uri uri = mContext.getContentResolver().insert(SpynPartnerEntry.CONTENT_URI, values);
     }
 
     private void loadSpynData() {
         String workerValue;
         Cursor cursor = mContext.getContentResolver()
-                .query(SpynPartnerEntry.CONTENT_URI,null,null,null,null);
+                .query(SpynPartnerEntry.CONTENT_URI, null, null, null, null);
 
         try {
             if (cursor.moveToFirst()) {
