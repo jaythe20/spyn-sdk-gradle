@@ -17,6 +17,7 @@ public class Spyn {
     }
 
     public static spynSDK getInstance() {
+
         return spyn;
     }
 }
