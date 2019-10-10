@@ -17,16 +17,6 @@ import android.provider.BaseColumns;
 import android.provider.Settings;
 import android.util.Log;
 
-import com.android.volley.AuthFailureError;
-import com.android.volley.NetworkResponse;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -183,11 +173,12 @@ public class spynSDK {
 
     // Perform device registration
     public void register() {
+        Log.e("Spyn", "REgister:" + baseUrl);
         JSONObject json = getRegisterVars(this.dealId);
 //        String method1, String uCall, String json, TaskCompletionListener tListener
         new ApiTask(POST, baseUrl, json.toString(), new TaskCompletionListener() {
             @Override
-            public void OnTaskComlpeted(java.lang.String resp) {
+            public void OnTaskComlpeted(String resp) {
 
                 if (resp.equalsIgnoreCase("400") || resp.equalsIgnoreCase("412") || resp.equalsIgnoreCase("404")) {
                     Log.w("API Error", resp);
@@ -209,7 +200,7 @@ public class spynSDK {
                     }
                 }
             }
-        });
+        }).execute();
 
 //        RequestQueue queue = Volley.newRequestQueue(mContext);
 //        JsonObjectRequest jsonobj = new JsonObjectRequest(Request.Method.POST, baseUrl, json,
@@ -261,7 +252,7 @@ public class spynSDK {
 
         new ApiTask(GET, url, "", new TaskCompletionListener() {
             @Override
-            public void OnTaskComlpeted(java.lang.String response) {
+            public void OnTaskComlpeted(String response) {
 
                 if (response.equalsIgnoreCase("400") || response.equalsIgnoreCase("412") || response.equalsIgnoreCase("404")) {
                     Log.w("API Error", response);
@@ -309,7 +300,7 @@ public class spynSDK {
                     }
                 }
             }
-        });
+        }).execute();
 
 
 //        RequestQueue queue = Volley.newRequestQueue(mContext);
@@ -388,7 +379,7 @@ public class spynSDK {
         String url = baseUrl + getMachineId() + "/offered/?secret=" + getSecret();
         new ApiTask(POST, url, "", new TaskCompletionListener() {
             @Override
-            public void OnTaskComlpeted(java.lang.String response) {
+            public void OnTaskComlpeted(String response) {
                 if (response.equalsIgnoreCase("400") || response.equalsIgnoreCase("412") || response.equalsIgnoreCase("404")) {
                     Log.w("API Error", response);
 
@@ -399,7 +390,7 @@ public class spynSDK {
                     getWorkerFromAPI(false);
                 }
             }
-        });
+        }).execute();
 
 
 //        RequestQueue queue = Volley.newRequestQueue(mContext);
@@ -441,7 +432,7 @@ public class spynSDK {
         String url = baseUrl + getMachineId() + "/accepted/?secret=" + getSecret();
         new ApiTask(POST, url, "", new TaskCompletionListener() {
             @Override
-            public void OnTaskComlpeted(java.lang.String response) {
+            public void OnTaskComlpeted(String response) {
                 if (response.equalsIgnoreCase("400") || response.equalsIgnoreCase("412") || response.equalsIgnoreCase("404")) {
                     Log.w("API Error", response);
 
@@ -452,7 +443,7 @@ public class spynSDK {
                     getWorkerFromAPI(false);
                 }
             }
-        });
+        }).execute();
 
 //        RequestQueue queue = Volley.newRequestQueue(mContext);
 //
@@ -494,7 +485,7 @@ public class spynSDK {
 
         new ApiTask(POST, url, "", new TaskCompletionListener() {
             @Override
-            public void OnTaskComlpeted(java.lang.String response) {
+            public void OnTaskComlpeted(String response) {
                 if (response.equalsIgnoreCase("400") || response.equalsIgnoreCase("412") || response.equalsIgnoreCase("404")) {
                     Log.w("API Error", response);
 
@@ -505,7 +496,7 @@ public class spynSDK {
                     getWorkerFromAPI(false);
                 }
             }
-        });
+        }).execute();
 
 
 //        RequestQueue queue = Volley.newRequestQueue(mContext);
@@ -548,7 +539,7 @@ public class spynSDK {
 //        RequestQueue queue = Volley.newRequestQueue(mContext);
         new ApiTask(GET, url, "", new TaskCompletionListener() {
             @Override
-            public void OnTaskComlpeted(java.lang.String response) {
+            public void OnTaskComlpeted(String response) {
                 if (response.equalsIgnoreCase("400") || response.equalsIgnoreCase("412") || response.equalsIgnoreCase("404")) {
                     Log.w("API Error", response);
                 } else {
@@ -567,7 +558,7 @@ public class spynSDK {
                     }
                 }
             }
-        });
+        }).execute();
 
 
 //        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
@@ -674,7 +665,7 @@ public class spynSDK {
         StatFs stat = new StatFs(path.getPath());
         long blockSize = 0;
         long totalBlocks = 0;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR2) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             blockSize = stat.getBlockSizeLong();
             totalBlocks = stat.getBlockCountLong();
         }
