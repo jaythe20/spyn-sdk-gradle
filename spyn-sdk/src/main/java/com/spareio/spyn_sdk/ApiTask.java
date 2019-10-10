@@ -1,13 +1,7 @@
 package com.spareio.spyn_sdk;
 
-import android.content.ContentValues;
-import android.database.Cursor;
 import android.os.AsyncTask;
 import android.util.Log;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -83,6 +77,7 @@ public class ApiTask extends AsyncTask<String, String, String> {
     }
 
     public String postRequest(String urlStr, String jsonBodyStr) throws IOException {
+        Log.d("POST REQUEST", "URL:" + urlStr + " PARAM:" + jsonBodyStr);
         URL url = new URL(urlStr);
         HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
         httpURLConnection.setDoOutput(true);
@@ -94,10 +89,15 @@ public class ApiTask extends AsyncTask<String, String, String> {
             outputStream.flush();
             if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                 String resultToDisplay = getStringFromInputStream(new BufferedInputStream(httpURLConnection.getInputStream()));
+                Log.e("SUCCESS", "" + resultToDisplay);
                 return resultToDisplay;
-
             } else {
-                Log.e("Error", "" + httpURLConnection.getResponseMessage());
+                if (httpURLConnection.getResponseCode() == 201) {
+                    String resultToDisplay = getStringFromInputStream(new BufferedInputStream(httpURLConnection.getInputStream()));
+                    Log.e("ERROR", "" + resultToDisplay);
+                    return resultToDisplay;
+                }
+                Log.e("Error", "" + httpURLConnection.getResponseMessage() + " " + httpURLConnection.getResponseCode());
                 return "" + httpURLConnection.getResponseCode();
             }
         } catch (

@@ -2,14 +2,15 @@ package com.spareio.spyn_sdk;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 import android.os.Bundle;
-import android.util.Log;
+import android.preference.PreferenceManager;
+
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+
 
 public class Success extends AppCompatActivity {
 

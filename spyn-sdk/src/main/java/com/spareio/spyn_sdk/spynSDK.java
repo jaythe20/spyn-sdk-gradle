@@ -295,6 +295,7 @@ public class spynSDK {
                         } else {
                             Intent intent = new Intent(mContext, Interstitial.class);
                             intent.putExtra(EXTRA_DEALID, dealId);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                             mContext.startActivity(intent);
                         }
                     }
